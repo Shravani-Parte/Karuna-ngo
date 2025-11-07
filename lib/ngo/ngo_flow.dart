@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 // --- MOCK DATA STRUCTURES (Copied from main.dart for compilation safety) ---
 
 class Ngo {
@@ -56,7 +55,87 @@ final List<Donation> mockReceivedPledges = [
 ];
 
 
-// --- NGO HOME SCREEN (The main entry for NGO users) ---
+// ***************************************************************
+// --- NEW WIDGETS: NGO DRAWER AND SETTING TILE ---
+// ***************************************************************
+
+class NgoAppDrawer extends StatelessWidget {
+  const NgoAppDrawer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: <Widget>[
+          DrawerHeader(
+            decoration: BoxDecoration(color: Colors.teal.shade700),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                const Icon(Icons.business_center, size: 40, color: Colors.white),
+                const SizedBox(height: 8),
+                Text('${currentNgo.name} Options', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(currentNgo.category, style: TextStyle(color: Colors.teal.shade100, fontSize: 14)),
+              ],
+            ),
+          ),
+          _SettingTile(
+            icon: Icons.vpn_key_outlined,
+            title: 'Change Password',
+            onTap: () {
+              Navigator.pop(context); 
+              // TODO: Navigate to a change password screen
+            },
+          ),
+          _SettingTile(
+            icon: Icons.settings,
+            title: 'App Settings',
+            onTap: () {
+              Navigator.pop(context); 
+              // TODO: Navigate to an app settings screen
+            },
+          ),
+          const Divider(),
+          _SettingTile(
+            icon: Icons.logout,
+            title: 'Logout',
+            color: Colors.red,
+            onTap: () {
+              // Navigate back to the WelcomeScreen and remove all routes
+              Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Helper for Drawer Tiles (reused from Donor flow)
+class _SettingTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+  final Color? color;
+
+  const _SettingTile({required this.icon, required this.title, required this.onTap, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: color ?? Colors.black54),
+      title: Text(title, style: TextStyle(color: color ?? Colors.black87)),
+      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+      onTap: onTap,
+    );
+  }
+}
+
+// ***************************************************************
+// --- NGO HOME SCREEN (UPDATE WITH DRAWER) ---
+// ***************************************************************
 
 class NgoHomeScreen extends StatefulWidget {
   const NgoHomeScreen({super.key});
@@ -100,7 +179,17 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
         title: Text(_getPageTitle()),
         backgroundColor: Colors.teal.shade700,
         elevation: 4,
+        actions: [
+          // Optional: Add notification button here if needed
+          IconButton(
+            icon: const Icon(Icons.notifications_none, color: Colors.white),
+            onPressed: () {
+              // TODO: Navigate to Notification Screen
+            },
+          ),
+        ],
       ),
+      drawer: const NgoAppDrawer(), // <--- DRAWER ADDED HERE
       body: _widgetOptions.elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -128,7 +217,9 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
   }
 }
 
-// --- 1. NGO DASHBOARD ---
+// ***************************************************************
+// --- 1. NGO DASHBOARD (UNCHANGED) ---
+// ***************************************************************
 
 class NgoDashboard extends StatelessWidget {
   final Ngo ngo;
@@ -286,7 +377,9 @@ class _PledgeTile extends StatelessWidget {
   }
 }
 
-// --- 2. PLEDGE MANAGEMENT SCREEN ---
+// ***************************************************************
+// --- 2. PLEDGE MANAGEMENT SCREEN (UNCHANGED) ---
+// ***************************************************************
 
 class NgoRequestsScreen extends StatelessWidget {
   const NgoRequestsScreen({super.key});
@@ -387,7 +480,9 @@ class _PledgeManagementTile extends StatelessWidget {
   }
 }
 
-// --- 3. NGO PROFILE SCREEN ---
+// ***************************************************************
+// --- 3. NGO PROFILE SCREEN (UNCHANGED) ---
+// ***************************************************************
 
 class NgoProfileScreen extends StatelessWidget {
   const NgoProfileScreen({super.key});
@@ -426,8 +521,10 @@ class NgoProfileScreen extends StatelessWidget {
 
           Center(
             child: ElevatedButton.icon(
+              // This is a redundant logout button, but kept for full file integrity.
+              // The main logout is now in the drawer.
               onPressed: () {
-                Navigator.pushReplacementNamed(context, '/'); // Logout
+                Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false); // Logout
               },
               icon: const Icon(Icons.logout, color: Colors.white),
               label: const Text('Logout', style: TextStyle(color: Colors.white)),
