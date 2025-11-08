@@ -11,6 +11,8 @@ class Ngo {
   final String description;
   final String? contact;
   final String? website;
+  final String? ngoId;
+  final String? registrationId;
 
   Ngo({
     required this.id,
@@ -23,22 +25,43 @@ class Ngo {
     this.description = 'A dedicated non-profit organization focused on making a difference in the local community.',
     this.contact,
     this.website,
+    this.ngoId,
+    this.registrationId,
   });
 
   // Factory constructor to create Ngo from Firestore document
   factory Ngo.fromFirestore(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
+    if (data == null) {
+      // Handle case where document exists but has no data - provide defaults
+      return Ngo(
+        id: doc.id,
+        name: 'NGO Name Not Set',
+        category: 'General',
+        area: 'Location Not Set',
+        need: 'Needs Not Specified',
+        rating: 0.0,
+        imageUrl: '',
+        description: 'A dedicated non-profit organization focused on making a difference in the local community.',
+        contact: null,
+        website: null,
+        ngoId: null,
+        registrationId: null,
+      );
+    }
     return Ngo(
       id: doc.id,
-      name: data['name'] ?? '',
-      category: data['category'] ?? '',
-      area: data['area'] ?? '',
-      need: data['need'] ?? '',
+      name: data['name'] ?? 'NGO Name Not Set',
+      category: data['category'] ?? 'General',
+      area: data['area'] ?? 'Location Not Set',
+      need: data['need'] ?? 'Needs Not Specified',
       rating: (data['rating'] ?? 0.0).toDouble(),
       imageUrl: data['imageUrl'] ?? '',
       description: data['description'] ?? 'A dedicated non-profit organization focused on making a difference in the local community.',
       contact: data['contact'],
       website: data['website'],
+      ngoId: data['ngoId'],
+      registrationId: data['registrationId'],
     );
   }
 
@@ -54,6 +77,8 @@ class Ngo {
       'description': description,
       'contact': contact,
       'website': website,
+      'ngoId': ngoId,
+      'registrationId': registrationId,
     };
   }
 }
@@ -79,7 +104,10 @@ class Donation {
 
   // Factory constructor to create Donation from Firestore document
   factory Donation.fromFirestore(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
+    if (data == null) {
+      throw Exception('Donation document data is null');
+    }
     return Donation(
       id: doc.id,
       ngoId: data['ngoId'] ?? '',
@@ -127,7 +155,10 @@ class Pledge {
 
   // Factory constructor to create Pledge from Firestore document
   factory Pledge.fromFirestore(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
+    if (data == null) {
+      throw Exception('Pledge document data is null');
+    }
     return Pledge(
       id: doc.id,
       title: data['title'] ?? '',
@@ -175,7 +206,10 @@ class UserModel {
 
   // Factory constructor to create UserModel from Firestore document
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
+    if (data == null) {
+      throw Exception('User document data is null');
+    }
     return UserModel(
       uid: doc.id,
       email: data['email'] ?? '',

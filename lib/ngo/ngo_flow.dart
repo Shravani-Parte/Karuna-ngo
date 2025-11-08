@@ -1,61 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 // Note: You must add the import for 'ngo_chat_screen.dart' here for compilation.
 import 'ngo_chat_screen.dart';
 import 'ngo_profile_edit_screen.dart';
 import 'ngo_request_donation_screen.dart';
+import '../models.dart';
+import '../services/firestore_service.dart';
 
-// --- MOCK DATA STRUCTURES (Copied from main.dart for compilation safety) ---
 
-class Ngo {
-  final String id;
-  final String name;
-  final String category;
-  final String area;
-  final String need;
-  final double rating;
-  final String imageUrl;
-
-  Ngo({
-    required this.id,
-    required this.name,
-    required this.category,
-    required this.area,
-    required this.need,
-    required this.rating,
-    required this.imageUrl,
-  });
-}
-
-class Donation {
-  final String ngoName;
-  final String item;
-  final String date;
-  final String status;
-
-  Donation({
-    required this.ngoName,
-    required this.item,
-    required this.date,
-    required this.status,
-  });
-}
 
 // --- MOCK NGO DATA (Future Leaders Academy is the logged-in NGO) ---
 final Ngo currentNgo = Ngo(
-    id: '2', 
-    name: 'Future Leaders Academy', 
-    category: 'Education', 
-    area: 'Delhi', 
-    need: 'Laptops, Notebooks', 
-    rating: 4.5, 
-    imageUrl: 'https://placehold.co/600x400/4169E1/ffffff?text=Education'
+    id: '2',
+    name: 'Future Leaders Academy',
+    category: 'Education',
+    area: 'Delhi',
+    need: 'Laptops, Notebooks',
+    rating: 4.5,
+    imageUrl: 'https://placehold.co/600x400/4169E1/ffffff?text=Education',
+    description: 'Providing quality education and resources to children in need, preparing them to be the leaders of tomorrow.',
+    contact: null,
+    website: null
 );
 
 // Mock received pledges/donations for this NGO
 final List<Donation> mockReceivedPledges = [
-  Donation(ngoName: 'Future Leaders Academy', item: '10 Laptops (In-kind)', date: 'Nov 01, 2024', status: 'Pending'),
-  Donation(ngoName: 'Future Leaders Academy', item: '₹5000 (Monetary)', date: 'Oct 25, 2024', status: 'Received'),
-  Donation(ngoName: 'Future Leaders Academy', item: '50 Notebooks (In-kind)', date: 'Oct 10, 2024', status: 'Completed'),
+  Donation(id: '1', ngoId: '2', donorId: 'donor1', item: '10 Laptops (In-kind)', date: 'Nov 01, 2024', status: 'Pending', ngoName: 'Future Leaders Academy'),
+  Donation(id: '2', ngoId: '2', donorId: 'donor1', item: '₹5000 (Monetary)', date: 'Oct 25, 2024', status: 'Received', ngoName: 'Future Leaders Academy'),
+  Donation(id: '3', ngoId: '2', donorId: 'donor1', item: '50 Notebooks (In-kind)', date: 'Oct 10, 2024', status: 'Completed', ngoName: 'Future Leaders Academy'),
 ];
 
 
@@ -633,16 +606,92 @@ class NgoProfileScreen extends StatefulWidget {
 }
 
 class _NgoProfileScreenState extends State<NgoProfileScreen> {
-  // Mock State Data for editable fields
-  String ngoName = currentNgo.name;
-  String ngoContact = '+91 98765 43210'; // Mock contact
-  String ngoBio = 'Dedicated to empowering underprivileged children through quality education and skill development programs.'; // Mock bio
-  String ngoWebsite = 'futureleaders.org';
+  final FirestoreService _firestoreService = FirestoreService();
+  final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
+  // NGO data from Firestore
+  Ngo? _ngoData;
+  UserModel? _userData;
+  List<Donation> _pledges = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNgoData();
+  }
+
+  Future<void> _loadNgoData() async {
+    try {
+      // Get user data first to find NGO ID
+      final userDoc = await _firestoreService.getUser(currentUserId);
+      _userData = UserModel.fromFirestore(userDoc);
+
+      // Get NGO ID: for NGO users, use their uid as ngoId; for donors, use ngoId from user data
+      final ngoId = _userData!.userType == 'ngo' ? currentUserId : (_userData!.ngoId ?? currentNgo.id);
+      final ngoDoc = await _firestoreService.getNgo(ngoId);
+      if (!ngoDoc.exists) {
+        if (_userData!.userType == 'ngo') {
+          // Create default NGO document for new NGO users
+          await FirebaseFirestore.instance.collection('ngos').doc(ngoId).set({
+            'name': 'New NGO',
+            'category': 'General',
+            'area': 'Location Not Set',
+            'need': 'Needs Not Specified',
+            'rating': 0.0,
+            'imageUrl': '',
+            'description': 'A dedicated non-profit organization focused on making a difference in the local community.',
+            'contact': _userData!.contact,
+            'website': null,
+            'ngoId': _userData!.ngoId,
+          });
+          // Fetch the newly created document
+          final newNgoDoc = await _firestoreService.getNgo(ngoId);
+          _ngoData = Ngo.fromFirestore(newNgoDoc);
+        } else {
+          // For donors, if NGO doesn't exist, show error
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('NGO profile not found. Please contact support.')),
+          );
+          return;
+        }
+      } else {
+        _ngoData = Ngo.fromFirestore(ngoDoc);
+      }
+
+      // Fetch pledges for this NGO
+      final pledgesStream = _firestoreService.getDonationsForUser(ngoId, userType: 'ngo');
+      pledgesStream.listen((snapshot) {
+        setState(() {
+          _pledges = snapshot.docs.map((doc) => Donation.fromFirestore(doc)).toList();
+          _isLoading = false;
+        });
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading NGO profile: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final int totalPledges = mockReceivedPledges.length;
-    final int completedPledges = mockReceivedPledges.where((d) => d.status == 'Completed').length;
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_ngoData == null) {
+      return const Scaffold(
+        body: Center(child: Text('Failed to load NGO profile data')),
+      );
+    }
+
+    final int totalPledges = _pledges.length;
+    final int completedPledges = _pledges.where((d) => d.status.contains('Completed')).length;
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -664,9 +713,9 @@ class _NgoProfileScreenState extends State<NgoProfileScreen> {
                     child: Icon(Icons.business_center, size: 60, color: Colors.teal),
                   ),
                   const SizedBox(height: 12),
-                  Text(ngoName, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                  Text(_ngoData!.name ?? 'NGO', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
                   const SizedBox(height: 4),
-                  Text('NGO ID: ${currentNgo.id}', style: TextStyle(color: Colors.teal.shade100, fontSize: 14)),
+                  Text('NGO Registration ID: ${_ngoData!.registrationId ?? 'Not Set'}', style: TextStyle(color: Colors.teal.shade100, fontSize: 14)),
                   const SizedBox(height: 4),
                   Text('Total Impact: $completedPledges Completed Pledges', style: TextStyle(color: Colors.teal.shade100, fontSize: 16)),
                   const SizedBox(height: 12),
@@ -680,21 +729,24 @@ class _NgoProfileScreenState extends State<NgoProfileScreen> {
                         MaterialPageRoute(
                           builder: (context) => const NgoProfileEditScreen(),
                           settings: RouteSettings(arguments: {
-                            'name': ngoName,
-                            'contact': ngoContact,
-                            'bio': ngoBio,
-                            'website': ngoWebsite,
+                            'name': _ngoData!.name ?? '',
+                            'contact': _userData!.contact ?? '',
+                            'description': _ngoData!.description ?? '',
+                            'website': _ngoData!.website ?? '',
                           }),
                         ),
                       ) as Map<String, String>?;
 
                       if (updatedData != null) {
-                        setState(() {
-                          ngoName = updatedData['name'] ?? ngoName;
-                          ngoContact = updatedData['contact'] ?? ngoContact;
-                          ngoBio = updatedData['bio'] ?? ngoBio;
-                          ngoWebsite = updatedData['website'] ?? ngoWebsite;
+                        await _firestoreService.updateNgo(_ngoData!.id, {
+                          'name': updatedData['name'],
+                          'description': updatedData['description'],
+                          'website': updatedData['website'],
                         });
+                        await _firestoreService.updateUser(currentUserId, {
+                          'contact': updatedData['contact'],
+                        });
+                        _loadNgoData(); // Reload data
                       }
                     },
                   )
@@ -709,9 +761,9 @@ class _NgoProfileScreenState extends State<NgoProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('Contact & Bio', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  _NgoDetailTile(icon: Icons.phone, label: 'Contact', value: ngoContact),
-                  _NgoDetailTile(icon: Icons.info_outline, label: 'Bio', value: ngoBio),
-                  _NgoDetailTile(icon: Icons.public, label: 'Website', value: ngoWebsite),
+                  _NgoDetailTile(icon: Icons.phone, label: 'Contact', value: _userData!.contact ?? 'Not provided'),
+                  _NgoDetailTile(icon: Icons.info_outline, label: 'Description', value: _ngoData!.description ?? 'No description added yet'),
+                  _NgoDetailTile(icon: Icons.public, label: 'Website', value: _ngoData!.website ?? 'No website'),
                   const Divider(height: 30),
 
                   // Pledge History
@@ -737,13 +789,13 @@ class _NgoProfileScreenState extends State<NgoProfileScreen> {
                             children: [
                               // Pending Pledges
                               _PledgeActivityList(
-                                  pledges: mockReceivedPledges.where((p) => p.status.contains('Pending')).toList()),
+                                  pledges: _pledges.where((p) => p.status.contains('Pending') || p.status == 'pending').toList()),
                               // Ongoing Pledges
                               _PledgeActivityList(
-                                  pledges: mockReceivedPledges.where((p) => p.status.contains('Received')).toList()),
+                                  pledges: _pledges.where((p) => p.status.contains('Ongoing') || p.status == 'received').toList()),
                               // History (Completed)
                               _PledgeActivityList(
-                                  pledges: mockReceivedPledges.where((p) => p.status.contains('Completed')).toList()),
+                                  pledges: _pledges.where((p) => p.status.contains('Completed')).toList()),
                             ],
                           ),
                         ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'models.dart'; // Import Donation and mockDonationHistory
 import 'home_content.dart'; // Import SectionHeader
+import 'services/firestore_service.dart';
 
 // --- PROFILE PAGE (Stateful, Editable, with Donor ID/Bio) ---
 
@@ -12,16 +14,56 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // Mock State Data
-  String userName = 'Karan Sharma';
-  String userEmail = 'karan.s@example.com';
-  String userContact = '+91 98765 43210';
-  String userBio = 'Passionate donor focused on education and animal welfare. Always happy to support local community initiatives.';
-  final String donorId = 'DC-9347-1985';
+  final FirestoreService _firestoreService = FirestoreService();
+  final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
+  // User data from Firestore
+  UserModel? _userData;
+  List<Donation> _donations = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final userDoc = await _firestoreService.getUser(currentUserId);
+      _userData = UserModel.fromFirestore(userDoc);
+
+      // Fetch donations for this user
+      final donationsStream = _firestoreService.getDonationsForUser(currentUserId, userType: 'donor');
+      donationsStream.listen((snapshot) {
+        setState(() {
+          _donations = snapshot.docs.map((doc) => Donation.fromFirestore(doc)).toList();
+          _isLoading = false;
+        });
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading profile: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final int totalDonations = mockDonationHistory.where((d) => d.status.contains('Completed')).length;
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_userData == null) {
+      return const Scaffold(
+        body: Center(child: Text('Failed to load profile data')),
+      );
+    }
+
+    final int totalDonations = _donations.where((d) => d.status.contains('Completed')).length;
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -29,7 +71,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             // Profile Header
             Container(
-              // ... (Profile Header content) ...
               padding: const EdgeInsets.all(24),
               width: double.infinity,
               decoration: BoxDecoration(
@@ -44,9 +85,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Icon(Icons.person_rounded, size: 60, color: Colors.teal),
                   ),
                   const SizedBox(height: 12),
-                  Text(userName, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                  Text(_userData!.name ?? 'Donor', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
                   const SizedBox(height: 4),
-                  Text('Donor ID: $donorId', style: TextStyle(color: Colors.teal.shade100, fontSize: 14)), 
+                  Text('Donor ID: ${currentUserId.substring(0, 8).toUpperCase()}', style: TextStyle(color: Colors.teal.shade100, fontSize: 14)),
                   const SizedBox(height: 4),
                   Text('Total Impact: $totalDonations Donations', style: TextStyle(color: Colors.teal.shade100, fontSize: 16)),
                   const SizedBox(height: 12),
@@ -56,17 +97,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     label: const Text('Edit Profile', style: TextStyle(color: Colors.white)),
                     onPressed: () async {
                       final updatedData = await Navigator.pushNamed(context, '/profileEdit', arguments: {
-                        'name': userName,
-                        'contact': userContact,
-                        'bio': userBio,
+                        'name': _userData!.name ?? '',
+                        'contact': _userData!.contact ?? '',
+                        'bio': _userData!.bio ?? '',
                       }) as Map<String, String>?;
 
                       if (updatedData != null) {
-                        setState(() {
-                          userName = updatedData['name'] ?? userName;
-                          userContact = updatedData['contact'] ?? userContact;
-                          userBio = updatedData['bio'] ?? userBio;
+                        await _firestoreService.updateUser(currentUserId, {
+                          'name': updatedData['name'],
+                          'contact': updatedData['contact'],
+                          'bio': updatedData['bio'],
                         });
+                        _loadUserData(); // Reload data
                       }
                     },
                   )
@@ -81,9 +123,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SectionHeader(title: 'Contact & Bio'),
-                  _ProfileDetailTile(icon: Icons.mail, label: 'Email', value: userEmail),
-                  _ProfileDetailTile(icon: Icons.phone, label: 'Contact', value: userContact),
-                  _ProfileDetailTile(icon: Icons.info_outline, label: 'Bio', value: userBio), 
+                  _ProfileDetailTile(icon: Icons.mail, label: 'Email', value: _userData!.email),
+                  _ProfileDetailTile(icon: Icons.phone, label: 'Contact', value: _userData!.contact ?? 'Not provided'),
+                  _ProfileDetailTile(icon: Icons.info_outline, label: 'Bio', value: _userData!.bio ?? 'No bio added yet'),
                   const Divider(height: 30),
 
                   // Donation History
@@ -104,17 +146,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ],
                         ),
                         SizedBox(
-                          height: 300, 
+                          height: 300,
                           child: TabBarView(
                             children: [
                               // All Posts/Activity
-                              _ActivityList(donations: mockDonationHistory),
+                              _ActivityList(donations: _donations),
                               // Currently Ongoing Posts/Pledges
                               _ActivityList(
-                                  donations: mockDonationHistory.where((d) => d.status.contains('Ongoing')).toList()),
+                                  donations: _donations.where((d) => d.status.contains('Ongoing') || d.status == 'pending').toList()),
                               // Donation History
                               _ActivityList(
-                                  donations: mockDonationHistory.where((d) => d.status.contains('Completed')).toList()),
+                                  donations: _donations.where((d) => d.status.contains('Completed')).toList()),
                             ],
                           ),
                         ),

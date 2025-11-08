@@ -1,17 +1,18 @@
-# Firebase Integration - TODO
+# TODO: Implement Profile Data Fetch and Edit from Database
 
-- [x] Add Firebase dependencies (firebase_core, firebase_auth, cloud_firestore) to pubspec.yaml
-- [x] Add Google Services classpath to android/build.gradle.kts
-- [x] Apply Google Services plugin in android/app/build.gradle.kts
-- [x] Initialize Firebase in lib/main.dart
-- [x] Run flutter pub get to install dependencies
-- [x] Create Firebase service classes (AuthService, FirestoreService)
-- [x] Update models.dart to define Firestore-compatible models
-- [x] Modify signup_screen.dart and login_screen.dart to use Firebase Auth
-- [ ] Update home_content.dart to fetch NGOs from Firestore
-- [ ] Implement pledge creation, acceptance, status updates in relevant screens
-- [ ] Add filtering logic in search_screen.dart using Firestore queries
-- [ ] Handle user sessions and navigation based on auth state
-- [ ] Test authentication and data flows
-- [ ] Ensure pledge statuses are managed correctly (pending -> ongoing -> completed)
-- [ ] Store all data in Firestore except testimonials
+## Donor Profile Updates
+- [ ] Update ProfileScreen to fetch user data from Firestore on load
+- [ ] Display registration details: name, email, contact
+- [ ] Allow editing bio and save to Firestore
+- [ ] Update ProfileEditScreen to save bio to user document
+
+## NGO Profile Updates
+- [ ] Update NgoProfileScreen to fetch user and NGO data from Firestore
+- [ ] Display registration details: name, category, area, email, contact
+- [ ] Allow editing description, website, contact and save to NGO document
+- [ ] Update NgoProfileEditScreen to save changes to NGO document
+
+## General
+- [ ] Add FirestoreService imports where needed
+- [ ] Handle loading states and errors
+- [ ] Test data fetching and saving

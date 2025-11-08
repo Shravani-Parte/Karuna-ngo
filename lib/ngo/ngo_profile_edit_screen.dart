@@ -13,7 +13,7 @@ class _NgoProfileEditScreenState extends State<NgoProfileEditScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _contactController;
-  late TextEditingController _bioController;
+  late TextEditingController _descriptionController;
   late TextEditingController _websiteController;
 
   @override
@@ -21,7 +21,7 @@ class _NgoProfileEditScreenState extends State<NgoProfileEditScreen> {
     super.initState();
     _nameController = TextEditingController();
     _contactController = TextEditingController();
-    _bioController = TextEditingController();
+    _descriptionController = TextEditingController();
     _websiteController = TextEditingController();
   }
 
@@ -32,7 +32,7 @@ class _NgoProfileEditScreenState extends State<NgoProfileEditScreen> {
     if (_nameController.text.isEmpty) {
       _nameController.text = args['name'] ?? '';
       _contactController.text = args['contact'] ?? '';
-      _bioController.text = args['bio'] ?? '';
+      _descriptionController.text = args['description'] ?? '';
       _websiteController.text = args['website'] ?? '';
     }
   }
@@ -41,7 +41,7 @@ class _NgoProfileEditScreenState extends State<NgoProfileEditScreen> {
   void dispose() {
     _nameController.dispose();
     _contactController.dispose();
-    _bioController.dispose();
+    _descriptionController.dispose();
     _websiteController.dispose();
     super.dispose();
   }
@@ -51,7 +51,7 @@ class _NgoProfileEditScreenState extends State<NgoProfileEditScreen> {
       Navigator.pop(context, {
         'name': _nameController.text,
         'contact': _contactController.text,
-        'bio': _bioController.text,
+        'description': _descriptionController.text,
         'website': _websiteController.text,
       });
     }
@@ -105,7 +105,7 @@ class _NgoProfileEditScreenState extends State<NgoProfileEditScreen> {
               const SizedBox(height: 15),
               _buildTextField(_contactController, 'Contact Number', Icons.phone, keyboardType: TextInputType.phone),
               const SizedBox(height: 15),
-              _buildTextField(_bioController, 'Description/Bio (Max 200 chars)', Icons.info_outline, maxLines: 4, maxLength: 200),
+              _buildTextField(_descriptionController, 'Description/Bio (Max 200 chars)', Icons.info_outline, maxLines: 4, maxLength: 200),
               const SizedBox(height: 15),
               _buildTextField(_websiteController, 'Website', Icons.public, keyboardType: TextInputType.url),
               const SizedBox(height: 30),

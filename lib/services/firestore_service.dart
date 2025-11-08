@@ -26,8 +26,8 @@ class FirestoreService {
   }
 
   // Add NGO to Firestore
-  Future<void> addNgo(Map<String, dynamic> ngoData) async {
-    await ngos.add(ngoData);
+  Future<DocumentReference> addNgo(Map<String, dynamic> ngoData) async {
+    return await ngos.add(ngoData);
   }
 
   // Get all NGOs

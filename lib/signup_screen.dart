@@ -189,7 +189,7 @@ class _NgoSignUpFormState extends State<_NgoSignUpForm> {
         );
 
         // Add NGO data to Firestore
-        await _firestoreService.addNgo({
+        final ngoDocRef = await _firestoreService.addNgo({
           'name': _ngoNameController.text.trim(),
           'registrationId': _registrationIdController.text.trim(),
           'category': _selectedCategory,
@@ -203,13 +203,13 @@ class _NgoSignUpFormState extends State<_NgoSignUpForm> {
           'status': 'pending', // For admin approval
         });
 
-        // Add user data to Firestore
+        // Add user data to Firestore, linking to the NGO document
         await _firestoreService.addUser(userCredential.user!.uid, {
           'email': _emailController.text.trim(),
           'userType': 'ngo',
           'name': _contactPersonController.text.trim(),
           'contact': '',
-          'ngoId': '', // Will be set after NGO approval
+          'ngoId': ngoDocRef.id, // Link to the NGO document ID
         });
 
         if (mounted) {
