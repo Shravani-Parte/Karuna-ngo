@@ -22,13 +22,13 @@ class WelcomeScreen extends StatelessWidget {
                 size: 80,
                 color: Colors.white,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               const Text(
-                'NGO Connect',
+                'Karuna',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 50,
+                  fontWeight: FontWeight.w900,
                   color: Colors.white,
                 ),
               ),
@@ -58,7 +58,7 @@ class WelcomeScreen extends StatelessWidget {
               // NGO Login Button
               _LoginButton(
                 icon: Icons.business,
-                label: 'Login as NGO',
+                label: 'Login as an NGO',
                 color: Theme.of(context).hintColor, // Accent color
                 textColor: Colors.black87,
                 onPressed: () {
