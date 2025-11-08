@@ -53,7 +53,7 @@ final Ngo currentNgo = Ngo(
 
 // Mock received pledges/donations for this NGO
 final List<Donation> mockReceivedPledges = [
-  Donation(ngoName: 'Future Leaders Academy', item: '10 Laptops (In-kind)', date: 'Nov 01, 2024', status: 'Pending Pickup'),
+  Donation(ngoName: 'Future Leaders Academy', item: '10 Laptops (In-kind)', date: 'Nov 01, 2024', status: 'Pending'),
   Donation(ngoName: 'Future Leaders Academy', item: '₹5000 (Monetary)', date: 'Oct 25, 2024', status: 'Received'),
   Donation(ngoName: 'Future Leaders Academy', item: '50 Notebooks (In-kind)', date: 'Oct 10, 2024', status: 'Completed'),
 ];
@@ -522,7 +522,7 @@ class _PendingPledgesTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pendingPledges = mockReceivedPledges.where((pledge) => pledge.status == 'Pending Pickup').toList();
+    final pendingPledges = mockReceivedPledges.where((pledge) => pledge.status == 'Pending').toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -534,7 +534,7 @@ class _PendingPledgesTab extends StatelessWidget {
           if (pendingPledges.isEmpty)
             const Center(child: Text('No pending pledges.', style: TextStyle(color: Colors.grey)))
           else
-            ...pendingPledges.map((pledge) => _PendingPledgeTile(pledge: pledge)).toList(),
+            ...pendingPledges.map((pledge) => _PledgeManagementTile(pledge: pledge)).toList(),
         ],
       ),
     );
@@ -589,7 +589,7 @@ class _PledgeManagementTile extends StatelessWidget {
     switch (status) {
       case 'Received':
         return Colors.green.shade600;
-      case 'Pending Pickup':
+      case 'Pending':
         return Colors.orange.shade600;
       case 'Completed':
         return Colors.blue.shade600;
@@ -624,31 +624,6 @@ class _PledgeManagementTile extends StatelessWidget {
             ),
             const SizedBox(height: 5),
             Text('Pledged on: ${pledge.date}', style: TextStyle(color: Colors.grey.shade600)),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                if (pledge.status == 'Pending Pickup')
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      // Mock action to contact donor
-                    },
-                    icon: const Icon(Icons.chat, size: 18, color: Colors.white),
-                    label: const Text('Contact Donor', style: TextStyle(color: Colors.white)),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.teal.shade500),
-                  ),
-                const SizedBox(width: 8),
-                if (pledge.status == 'Pending Pickup')
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      // Mock action to complete pickup
-                    },
-                    icon: const Icon(Icons.done_all, size: 18, color: Colors.black87),
-                    label: const Text('Mark Complete', style: TextStyle(color: Colors.black87)),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.amber.shade400),
-                  ),
-              ],
-            ),
           ],
         ),
       ),

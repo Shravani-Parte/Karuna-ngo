@@ -1,6 +1,3 @@
-# TODO List for Login Page Implementation
-
-- [x] Create `lib/login_screen.dart` with tabs for Donor and NGO login forms, matching signup UI
-- [x] Edit `lib/welcome_screen.dart` to redirect login buttons to '/login'
-- [x] Update `lib/main.dart` to add route for '/login' pointing to LoginScreen
-- [x] Test navigation flow: welcome -> login -> respective homes
+- [ ] Modify _PendingPledgesTab to use _PledgeManagementTile instead of _PendingPledgeTile
+- [ ] Update _PledgeManagementTile to remove "Mark Complete" button for 'Pending Pickup' status
+- [ ] Update _OngoingPledgeTile to remove "Mark Complete" button
