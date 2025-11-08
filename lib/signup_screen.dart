@@ -62,10 +62,10 @@ class _DonorSignUpFormState extends State<_DonorSignUpForm> {
     if (_formKey.currentState!.validate()) {
       // Simulate account creation
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Donor account created! Logging in...')),
+        const SnackBar(content: Text('Donor account created! Please log in.')),
       );
-      // Navigate to Donor Home
-      Navigator.pushNamedAndRemoveUntil(context, '/donorHome', (route) => false);
+      // Navigate to Donor Login
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false, arguments: {'userType': 'donor'});
     }
   }
 
@@ -114,10 +114,10 @@ class _NgoSignUpFormState extends State<_NgoSignUpForm> {
     if (_formKey.currentState!.validate()) {
       // Simulate NGO registration submission
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('NGO registration submitted for approval!')),
+        const SnackBar(content: Text('NGO registration submitted for approval! Please log in.')),
       );
-      // Navigate to NGO Home or a confirmation screen
-      Navigator.pushNamedAndRemoveUntil(context, '/ngoHome', (route) => false);
+      // Navigate to NGO Login
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false, arguments: {'userType': 'ngo'});
     }
   }
 
