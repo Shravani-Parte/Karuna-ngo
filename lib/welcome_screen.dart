@@ -50,7 +50,7 @@ class WelcomeScreen extends StatelessWidget {
                 color: Colors.white,
                 textColor: Colors.teal.shade900,
                 onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/donorHome');
+                  Navigator.pushNamed(context, '/login', arguments: {'userType': 'donor'});
                 },
               ),
               const SizedBox(height: 20),
@@ -62,7 +62,7 @@ class WelcomeScreen extends StatelessWidget {
                 color: Theme.of(context).hintColor, // Accent color
                 textColor: Colors.black87,
                 onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/ngoHome');
+                  Navigator.pushNamed(context, '/login', arguments: {'userType': 'ngo'});
                 },
               ),
 

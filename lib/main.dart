@@ -8,7 +8,8 @@ import 'profile_edit_screen.dart';
 import 'post_detail_screen.dart';
 import 'donation_form_screen.dart';
 import 'signup_screen.dart';
-import 'ngo/ngo_flow.dart'; 
+import 'login_screen.dart';
+import 'ngo/ngo_flow.dart';
 
 // --- MAIN APP ENTRY POINT ---
 
@@ -50,11 +51,12 @@ class NgoConnectApp extends StatelessWidget {
       routes: {
         '/': (context) => const WelcomeScreen(),
         '/signUp': (context) => const SignUpScreen(),
+        '/login': (context) => const LoginScreen(),
         '/donorHome': (context) => const DonorHomeScreen(),
         '/ngoHome': (context) => const NgoHomeScreen(), // Route to NGO flow (assumed in ngo_flow.dart)
         '/profileEdit': (context) => const ProfileEditScreen(),
         // Note: Routes passing arguments must be handled carefully, here we pass null as a placeholder.
-        '/postDetail': (context) => const PostDetailScreen(ngo: null), 
+        '/postDetail': (context) => const PostDetailScreen(ngo: null),
         '/donationForm': (context) => const DonationFormScreen(ngo: null),
       },
     );

@@ -26,10 +26,7 @@ class _NgoRequestDonationScreenState extends State<NgoRequestDonationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Request New Donation'),
-        backgroundColor: Colors.teal,
-      ),
+      
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
