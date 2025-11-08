@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 // Note: You must add the import for 'ngo_chat_screen.dart' here for compilation.
 import 'ngo_chat_screen.dart';
 import 'ngo_profile_edit_screen.dart';
+import 'ngo_request_donation_screen.dart';
 
 // --- MOCK DATA STRUCTURES (Copied from main.dart for compilation safety) ---
 
@@ -70,12 +71,13 @@ class NgoHomeScreen extends StatefulWidget {
 class _NgoHomeScreenState extends State<NgoHomeScreen> {
   int _selectedIndex = 0;
 
-  // New list of tabs, Chat is at index 2
+  // New list of tabs, Request Donation at index 1, Chat at index 2, Profile at index 3
   static final List<Widget> _widgetOptions = <Widget>[
     NgoDashboard(ngo: currentNgo),
-    const NgoRequestsScreen(),
-    const NgoChatScreen(), // <--- NEW CHAT SCREEN at Index 2
-    const NgoProfileScreen(), // <--- Profile shifted to Index 3
+    const NgoRequestDonationScreen(), // <--- NEW REQUEST DONATION SCREEN at Index 1
+    const NgoRequestsScreen(), // <--- PLEDGE MANAGEMENT shifted to Index 2
+    const NgoChatScreen(), // <--- CHAT shifted to Index 3
+    const NgoProfileScreen(), // <--- Profile shifted to Index 4
   ];
 
   void _onItemTapped(int index) {
@@ -89,11 +91,13 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
       case 0:
         return 'NGO Dashboard';
       case 1:
-        return 'Pledge Management';
+        return 'Request Donations'; // <--- NEW TITLE for Request Donation
       case 2:
-        return 'Chat with Donors'; // <--- NEW TITLE
+        return 'Pledge Management'; // <--- SHIFTED
       case 3:
-        return 'My NGO Profile'; // <--- INDEX SHIFTED
+        return 'Chat with Donors'; // <--- SHIFTED
+      case 4:
+        return 'My NGO Profile'; // <--- SHIFTED
       default:
         return 'NGO Connect';
     }
@@ -125,10 +129,14 @@ class _NgoHomeScreenState extends State<NgoHomeScreen> {
             label: 'Dashboard',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.add_circle_outline),
+            label: 'Request',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.list_alt),
             label: 'Pledges',
           ),
-          BottomNavigationBarItem( // <--- NEW CHAT ITEM
+          BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble_outline),
             label: 'Chat',
           ),
