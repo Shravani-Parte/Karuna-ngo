@@ -256,7 +256,8 @@ class NgoDashboard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _StatCard(label: 'Active Pledges', value: '1', color: Colors.orange.shade100, icon: Icons.pending_actions),
+              _StatCard(label: 'Pending Pledges', value: '1', color: Colors.orange.shade100, icon: Icons.pending_actions),
+              _StatCard(label: 'Ongoing Pledges', value: '2', color: Colors.yellow.shade100, icon: Icons.hourglass_bottom),
               _StatCard(label: 'Total Completed', value: '25', color: Colors.green.shade100, icon: Icons.check_circle),
               _StatCard(label: 'Total Donors', value: '88', color: Colors.blue.shade100, icon: Icons.people),
             ],
@@ -303,9 +304,6 @@ class _NgoHeader extends StatelessWidget {
                 Icon(Icons.location_on, size: 16, color: Colors.grey.shade600),
                 const SizedBox(width: 4),
                 Text(ngo.area, style: TextStyle(color: Colors.grey.shade600)),
-                const Spacer(),
-                const Icon(Icons.star, color: Colors.amber, size: 18),
-                Text(ngo.rating.toString()),
               ],
             ),
             const SizedBox(height: 12),
@@ -364,12 +362,6 @@ class _NeedUpdateCard extends StatelessWidget {
         leading: const Icon(Icons.lightbulb, color: Colors.orange, size: 30),
         title: const Text('Current Key Need', style: TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(currentNeed, style: const TextStyle(fontSize: 15)),
-        trailing: TextButton(
-          onPressed: () {
-            // Mock update action
-          },
-          child: const Text('Update'),
-        ),
       ),
     );
   }
