@@ -19,7 +19,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // User data from Firestore
   UserModel? _userData;
-  List<Donation> _donations = [];
+  List<Donation> _donations = mockDonationHistory; // Use static mock data
   bool _isLoading = true;
 
   @override
@@ -32,15 +32,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final userDoc = await _firestoreService.getUser(currentUserId);
       _userData = UserModel.fromFirestore(userDoc);
-
-      // Fetch donations for this user
-      final donationsStream = _firestoreService.getDonationsForUser(currentUserId, userType: 'donor');
-      donationsStream.listen((snapshot) {
-        setState(() {
-          _donations = snapshot.docs.map((doc) => Donation.fromFirestore(doc)).toList();
-          _isLoading = false;
-        });
-      });
+      setState(() => _isLoading = false);
     } catch (e) {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(

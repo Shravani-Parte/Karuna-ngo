@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models.dart';
+import '../services/firestore_service.dart';
 
 // --- NGO PROFILE EDIT SCREEN (Adapted from ProfileEditScreen) ---
 
@@ -11,10 +15,17 @@ class NgoProfileEditScreen extends StatefulWidget {
 
 class _NgoProfileEditScreenState extends State<NgoProfileEditScreen> {
   final _formKey = GlobalKey<FormState>();
+  final FirestoreService _firestoreService = FirestoreService();
+  final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
   late TextEditingController _nameController;
   late TextEditingController _contactController;
   late TextEditingController _descriptionController;
   late TextEditingController _websiteController;
+
+  Ngo? _ngoData;
+  UserModel? _userData;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -23,17 +34,48 @@ class _NgoProfileEditScreenState extends State<NgoProfileEditScreen> {
     _contactController = TextEditingController();
     _descriptionController = TextEditingController();
     _websiteController = TextEditingController();
+    _loadData();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, String>? ?? {};
-    if (_nameController.text.isEmpty) {
-      _nameController.text = args['name'] ?? '';
-      _contactController.text = args['contact'] ?? '';
-      _descriptionController.text = args['description'] ?? '';
-      _websiteController.text = args['website'] ?? '';
+  Future<void> _loadData() async {
+    try {
+      // Get user data first to find NGO ID
+      final userDoc = await _firestoreService.getUser(currentUserId);
+      _userData = UserModel.fromFirestore(userDoc);
+
+      // Get NGO ID: for NGO users, use their uid as ngoId; for donors, use ngoId from user data
+      final ngoId = _userData!.userType == 'ngo' ? currentUserId : (_userData!.ngoId ?? 'default_ngo_id');
+      final ngoDoc = await _firestoreService.getNgo(ngoId);
+      if (ngoDoc.exists) {
+        _ngoData = Ngo.fromFirestore(ngoDoc);
+      } else {
+        // Handle case where NGO doesn't exist, perhaps create default
+        _ngoData = Ngo(
+          id: ngoId,
+          name: 'New NGO',
+          category: 'General',
+          area: 'Location Not Set',
+          need: 'Needs Not Specified',
+          rating: 0.0,
+          imageUrl: '',
+          description: 'A dedicated non-profit organization focused on making a difference in the local community.',
+          contact: _userData!.contact,
+          website: null,
+        );
+      }
+
+      // Populate controllers with data
+      _nameController.text = _ngoData!.name ?? '';
+      _contactController.text = _userData!.contact ?? '';
+      _descriptionController.text = _ngoData!.description ?? '';
+      _websiteController.text = _ngoData!.website ?? '';
+
+      setState(() => _isLoading = false);
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading profile data: $e')),
+      );
     }
   }
 
@@ -59,6 +101,12 @@ class _NgoProfileEditScreenState extends State<NgoProfileEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit NGO Profile'),

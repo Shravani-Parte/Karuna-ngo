@@ -44,10 +44,17 @@ class NgoHomeScreen extends StatefulWidget {
 class _NgoHomeScreenState extends State<NgoHomeScreen> {
   int _selectedIndex = 0;
 
+  // Method to redirect to dashboard
+  void _redirectToDashboard() {
+    setState(() {
+      _selectedIndex = 0;
+    });
+  }
+
   // New list of tabs, Request Donation at index 1, Chat at index 2, Profile at index 3
-  static final List<Widget> _widgetOptions = <Widget>[
+  List<Widget> get _widgetOptions => <Widget>[
     NgoDashboard(ngo: currentNgo),
-    const NgoRequestDonationScreen(), // <--- NEW REQUEST DONATION SCREEN at Index 1
+    NgoRequestDonationScreen(onRedirectToDashboard: _redirectToDashboard), // <--- NEW REQUEST DONATION SCREEN at Index 1
     const NgoRequestsScreen(), // <--- PLEDGE MANAGEMENT shifted to Index 2
     const NgoChatScreen(), // <--- CHAT shifted to Index 3
     const NgoProfileScreen(), // <--- Profile shifted to Index 4
@@ -456,7 +463,11 @@ class _OngoingPledgeTile extends StatelessWidget {
               children: [
                 ElevatedButton.icon(
                   onPressed: () {
-                    // Mock action to chat with donor
+                    // Navigate to individual chat screen for this donor
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => NgoChatDetailScreen(donorName: 'Donor')), // TODO: Replace with actual donor name from pledge data
+                    );
                   },
                   icon: const Icon(Icons.chat, size: 18, color: Colors.white),
                   label: const Text('Chat with Donor', style: TextStyle(color: Colors.white)),
@@ -465,7 +476,10 @@ class _OngoingPledgeTile extends StatelessWidget {
                 const SizedBox(width: 8),
                 ElevatedButton.icon(
                   onPressed: () {
-                    // Mock action to mark as complete
+                    // Show snackbar for marking as complete
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Pledge marked as complete')),
+                    );
                   },
                   icon: const Icon(Icons.done_all, size: 18, color: Colors.black87),
                   label: const Text('Mark Complete', style: TextStyle(color: Colors.black87)),
@@ -634,15 +648,16 @@ class _NgoProfileScreenState extends State<NgoProfileScreen> {
         if (_userData!.userType == 'ngo') {
           // Create default NGO document for new NGO users
           await FirebaseFirestore.instance.collection('ngos').doc(ngoId).set({
-            'name': 'New NGO',
+            'name': null,
             'category': 'General',
             'area': 'Location Not Set',
             'need': 'Needs Not Specified',
             'rating': 0.0,
             'imageUrl': '',
-            'description': 'A dedicated non-profit organization focused on making a difference in the local community.',
+            'description': null,
             'contact': _userData!.contact,
             'website': null,
+            'registrationId': null,
             'ngoId': _userData!.ngoId,
           });
           // Fetch the newly created document
@@ -660,14 +675,9 @@ class _NgoProfileScreenState extends State<NgoProfileScreen> {
         _ngoData = Ngo.fromFirestore(ngoDoc);
       }
 
-      // Fetch pledges for this NGO
-      final pledgesStream = _firestoreService.getDonationsForUser(ngoId, userType: 'ngo');
-      pledgesStream.listen((snapshot) {
-        setState(() {
-          _pledges = snapshot.docs.map((doc) => Donation.fromFirestore(doc)).toList();
-          _isLoading = false;
-        });
-      });
+      // Use static mock data for pledges
+      _pledges = mockReceivedPledges;
+      setState(() => _isLoading = false);
     } catch (e) {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -717,6 +727,8 @@ class _NgoProfileScreenState extends State<NgoProfileScreen> {
                   const SizedBox(height: 4),
                   Text('NGO Registration ID: ${_ngoData!.registrationId ?? 'Not Set'}', style: TextStyle(color: Colors.teal.shade100, fontSize: 14)),
                   const SizedBox(height: 4),
+                  Text('Contact: ${_userData!.contact ?? 'Not provided'}', style: TextStyle(color: Colors.teal.shade100, fontSize: 16)),
+                  const SizedBox(height: 4),
                   Text('Total Impact: $completedPledges Completed Pledges', style: TextStyle(color: Colors.teal.shade100, fontSize: 16)),
                   const SizedBox(height: 12),
                   // Edit Button
@@ -764,6 +776,7 @@ class _NgoProfileScreenState extends State<NgoProfileScreen> {
                   _NgoDetailTile(icon: Icons.phone, label: 'Contact', value: _userData!.contact ?? 'Not provided'),
                   _NgoDetailTile(icon: Icons.info_outline, label: 'Description', value: _ngoData!.description ?? 'No description added yet'),
                   _NgoDetailTile(icon: Icons.public, label: 'Website', value: _ngoData!.website ?? 'No website'),
+                  _NgoDetailTile(icon: Icons.business, label: 'Name', value: _ngoData!.name ?? 'Not provided'),
                   const Divider(height: 30),
 
                   // Pledge History

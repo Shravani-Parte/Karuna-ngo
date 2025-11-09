@@ -4,7 +4,8 @@ import '../models.dart'; // Import Ngo model
 // --- NGO REQUEST DONATION SCREEN (Form to Request New Donations) ---
 
 class NgoRequestDonationScreen extends StatefulWidget {
-  const NgoRequestDonationScreen({super.key});
+  final VoidCallback? onRedirectToDashboard;
+  const NgoRequestDonationScreen({super.key, this.onRedirectToDashboard});
 
   @override
   State<NgoRequestDonationScreen> createState() => _NgoRequestDonationScreenState();
@@ -80,17 +81,13 @@ class _NgoRequestDonationScreenState extends State<NgoRequestDonationScreen> {
                   return;
                 }
 
-                // Simulate saving the new request
+                // Mock submission - data not saved to DB
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Donation request for "${itemController.text}" has been created!',
-                    ),
-                  ),
+                  const SnackBar(content: Text('Request posted')),
                 );
 
-                // Navigate back to NGO home
-                Navigator.pop(context);
+                // Redirect to dashboard screen (set index to 0 in NgoHomeScreen)
+                widget.onRedirectToDashboard?.call();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal,
